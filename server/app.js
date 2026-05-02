@@ -11,6 +11,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const notesRoutes     = require('./routes/notes');
 const analyticsRoutes = require('./routes/analytics');
 const chatRoutes      = require('./routes/chat');
+const tasksRoutes     = require('./routes/tasks');
 const errorHandler    = require('./middleware/errorHandler');
 
 const app = express();
@@ -76,6 +77,7 @@ app.use('/api/activity',  apiLimiter,  activityRoutes);
 app.use('/api/dashboard', apiLimiter,  dashboardRoutes);
 app.use('/api/notes',     apiLimiter,  notesRoutes);
 app.use('/api/analytics', apiLimiter,  analyticsRoutes);
+app.use('/api/tasks',    apiLimiter,  tasksRoutes);
 
 // Tighter limit on AI chat — each call hits the Gemini API
 const chatLimiter = rateLimit({

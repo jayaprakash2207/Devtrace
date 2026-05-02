@@ -37,9 +37,10 @@ const loginRules = [
 
 // ── Local auth ───────────────────────────────────────────────────────────────
 
-router.post('/signup', signupRules, validate, ctrl.signup);
-router.post('/login',  loginRules,  validate, ctrl.login);
-router.get('/me',      protect, ctrl.me);
+router.post('/signup',   signupRules, validate, ctrl.signup);
+router.post('/login',    loginRules,  validate, ctrl.login);
+router.get('/me',        protect, ctrl.me);
+router.patch('/profile', protect, ctrl.updateProfile);
 
 // ── Google OAuth ─────────────────────────────────────────────────────────────
 

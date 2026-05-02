@@ -138,6 +138,49 @@ exports.me = (req, res) => {
   res.json({ success: true, user: req.user });
 };
 
+// ─── updateProfile ───────────────────────────────────────────────────────────
+
+/**
+ * PATCH /api/auth/profile  (protected)
+ * Body: { username?, currentPassword?, newPassword? }
+ */
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { username, currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (username !== undefined) {
+      if (!/^[a-zA-Z0-9_]{2,30}$/.test(username)) {
+        return res.status(400).json({ success: false, message: 'Username must be 2–30 characters, letters/numbers/underscores only' });
+      }
+      user.username = username;
+    }
+
+    if (newPassword) {
+      if (user.provider !== 'local') {
+        return res.status(400).json({ success: false, message: 'OAuth accounts cannot change their password here' });
+      }
+      if (!currentPassword) {
+        return res.status(400).json({ success: false, message: 'Current password is required to set a new one' });
+      }
+      if (!(await user.matchPassword(currentPassword))) {
+        return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+      }
+      if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+        return res.status(400).json({ success: false, message: 'New password must be at least 8 characters with a letter and a number' });
+      }
+      user.password = newPassword;
+    }
+
+    await user.save();
+
+    res.json({ success: true, message: 'Profile updated', user: userPayload(user) });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── oauthCallback ───────────────────────────────────────────────────────────
 
 /**

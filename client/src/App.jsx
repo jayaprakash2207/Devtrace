@@ -6,9 +6,9 @@ import Signup        from './pages/Signup';
 import OAuthCallback from './pages/OAuthCallback';
 import Dashboard     from './pages/Dashboard';
 import Notes         from './pages/Notes';
+import Tasks         from './pages/Tasks';
+import Profile       from './pages/Profile';
 import Sidebar       from './components/Sidebar';
-
-/* ── Route guards ─────────────────────────────────��──────────────────── */
 
 function FullPageSpinner() {
   return (
@@ -36,18 +36,18 @@ function PublicRoute({ children }) {
   return token ? <Navigate to="/dashboard" replace /> : children;
 }
 
-/* ── Router ──────────────────────────────────────────────────────────── */
-
 export default function App() {
   return (
     <Routes>
-      <Route path="/"        element={<Landing />} />
-      <Route path="/login"        element={<PublicRoute><Login  /></PublicRoute>} />
-      <Route path="/signup"       element={<PublicRoute><Signup /></PublicRoute>} />
+      <Route path="/"              element={<Landing />} />
+      <Route path="/login"         element={<PublicRoute><Login  /></PublicRoute>} />
+      <Route path="/signup"        element={<PublicRoute><Signup /></PublicRoute>} />
       <Route path="/auth/callback" element={<OAuthCallback />} />
 
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/notes"     element={<ProtectedRoute><Notes     /></ProtectedRoute>} />
+      <Route path="/tasks"     element={<ProtectedRoute><Tasks     /></ProtectedRoute>} />
+      <Route path="/profile"   element={<ProtectedRoute><Profile   /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

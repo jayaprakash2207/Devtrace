@@ -5,7 +5,9 @@ import styles from './Sidebar.module.css';
 
 const NAV = [
   { to: '/dashboard', icon: '▦',  label: 'Dashboard' },
+  { to: '/tasks',     icon: '✓',  label: 'Tasks'     },
   { to: '/notes',     icon: '✎',  label: 'Notes'     },
+  { to: '/profile',   icon: '◉',  label: 'Profile'   },
 ];
 
 export default function Sidebar() {
