@@ -1,0 +1,79 @@
+.wrap {
+  position: relative;
+  padding-bottom: 28px;
+}
+
+.barsRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 140px;
+}
+
+.barCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  gap: 4px;
+  position: relative;
+}
+
+.count {
+  font-size: 0.6rem;
+  color: var(--muted);
+  min-height: 14px;
+  line-height: 1;
+}
+
+.track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(255,255,255,0.03);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar {
+  width: 100%;
+  background: linear-gradient(to top, var(--primary) 0%, var(--primary-light) 100%);
+  border-radius: 4px 4px 0 0;
+  transition: height 700ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-height: 0;
+}
+
+.today {
+  background: linear-gradient(to top, var(--accent) 0%, #67e8f9 100%);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+}
+
+.xAxis {
+  position: absolute;
+  bottom: 20px;
+  left: 0; right: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+.dayLabel {
+  position: absolute;
+  bottom: -24px;
+  font-size: 0.62rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.todayLabel {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 2rem;
+}

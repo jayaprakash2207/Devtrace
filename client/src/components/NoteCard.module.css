@@ -1,0 +1,115 @@
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  cursor: pointer;
+  transition: transform var(--t), box-shadow var(--t), border-color var(--t);
+  animation: scaleIn 220ms ease;
+  position: relative;
+  overflow: hidden;
+}
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 60%, rgba(99,102,241,0.04));
+  pointer-events: none;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+  border-color: var(--border-2);
+}
+
+.pinned {
+  border-color: rgba(245,158,11,0.3);
+  background: linear-gradient(135deg, var(--card) 80%, rgba(245,158,11,0.05));
+}
+.pinned:hover { border-color: rgba(245,158,11,0.5); }
+
+/* Header */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+  word-break: break-word;
+}
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.pin { font-size: 0.85rem; line-height: 1; }
+
+.deleteBtn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: all var(--t);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card:hover .deleteBtn { opacity: 1; }
+.deleteBtn:hover { background: var(--danger-dim); color: var(--danger); }
+
+/* Snippet */
+.snippet {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  line-height: 1.55;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.tags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.tag {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--primary-light);
+  background: var(--primary-dim);
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.tagMore {
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+.time {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-left: auto;
+  white-space: nowrap;
+}

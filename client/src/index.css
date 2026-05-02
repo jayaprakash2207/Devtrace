@@ -1,0 +1,202 @@
+/* ── Reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+
+/* ── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  /* Background layers */
+  --bg:          #070711;
+  --surface:     #0c0c1e;
+  --card:        #111126;
+  --card-hover:  #161638;
+  --overlay:     rgba(7,7,17,0.85);
+
+  /* Borders */
+  --border:      #1e1e3d;
+  --border-2:    #2d2d55;
+
+  /* Brand / Primary — indigo */
+  --primary:       #6366f1;
+  --primary-light: #818cf8;
+  --primary-dim:   rgba(99,102,241,0.12);
+  --primary-glow:  rgba(99,102,241,0.35);
+
+  /* Accent — cyan */
+  --accent:     #22d3ee;
+  --accent-dim: rgba(34,211,238,0.12);
+
+  /* Semantic */
+  --success:     #10b981;
+  --success-dim: rgba(16,185,129,0.12);
+  --warning:     #f59e0b;
+  --warning-dim: rgba(245,158,11,0.12);
+  --danger:      #ef4444;
+  --danger-dim:  rgba(239,68,68,0.12);
+
+  /* Text */
+  --text:      #e2e8f0;
+  --text-2:    #a0aec0;
+  --muted:     #64748b;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius:    10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* Typography */
+  --font: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Motion */
+  --t: 180ms ease;
+  --t-slow: 320ms ease;
+
+  /* Shadows */
+  --shadow:    0 4px 20px rgba(0,0,0,0.45);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,0.6);
+  --shadow-primary: 0 0 24px rgba(99,102,241,0.25);
+
+  /* Sidebar */
+  --sidebar-w: 240px;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--primary); text-decoration: none; transition: color var(--t); }
+a:hover { color: var(--primary-light); }
+
+img { max-width: 100%; display: block; }
+
+/* ── Typography ────────────────────────────────────────────────────────── */
+h1,h2,h3,h4,h5,h6 { line-height: 1.25; font-weight: 700; letter-spacing: -0.4px; }
+h1 { font-size: clamp(2rem, 5vw, 3.5rem); }
+h2 { font-size: clamp(1.4rem, 3vw, 2rem); }
+h3 { font-size: 1.15rem; }
+
+/* ── Form elements ─────────────────────────────────────────────────────── */
+input, textarea, select {
+  font-family: var(--font);
+  font-size: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 0.65rem 0.9rem;
+  width: 100%;
+  outline: none;
+  transition: border-color var(--t), box-shadow var(--t);
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-dim);
+}
+input::placeholder, textarea::placeholder { color: var(--muted); }
+textarea { resize: vertical; min-height: 80px; }
+select { appearance: none; cursor: pointer; }
+select option { background: var(--card); }
+
+button {
+  cursor: pointer;
+  font-family: var(--font);
+  border: none;
+  outline: none;
+  transition: all var(--t);
+}
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* ── Utility ───────────────────────────────────────────────────────────── */
+.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+/* ── Animations ────────────────────────────────────────────────────────── */
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes fadeIn   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideIn  { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
+@keyframes scaleIn  { from { opacity:0; transform:scale(.96); } to { opacity:1; transform:scale(1); } }
+@keyframes pulse    { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+@keyframes shimmer  { to { background-position: 200% center; } }
+@keyframes float    {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-10px); }
+}
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Shared helpers ────────────────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid var(--border-2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  vertical-align: middle;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--card) 25%, var(--card-hover) 50%, var(--card) 75%);
+  background-size: 200% auto;
+  animation: shimmer 1.5s linear infinite;
+  border-radius: var(--radius);
+}
+
+/* ── App shell ─────────────────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  .app-main { margin-left: 0; }
+}
+
+/* ── Page wrapper ──────────────────────────────────────────────────────── */
+.page-wrap {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+}
+
+/* ── Gradient text ─────────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

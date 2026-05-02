@@ -1,0 +1,115 @@
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.greeting { font-size: clamp(1.3rem, 3vw, 1.8rem); letter-spacing: -0.5px; }
+.date { font-size: 0.85rem; color: var(--muted); margin-top: var(--space-1); }
+
+.headerActions { display: flex; gap: var(--space-3); }
+.headerBtn {
+  padding: 0.55rem 1.2rem;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all var(--t);
+}
+.headerBtn:hover { background: var(--primary-light); box-shadow: var(--shadow-primary); }
+
+/* ── Stats ────────────────────────────────────────── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+/* ── Main grid ────────────────────────────────────── */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 900px) {
+  .mainGrid { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-5);
+}
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+.panelTitle { font-size: 0.95rem; font-weight: 700; }
+.panelBadge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.insightsList { display: flex; flex-direction: column; gap: var(--space-3); }
+.insightsSkeleton { display: flex; flex-direction: column; gap: var(--space-3); }
+.emptyInsights {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  color: var(--muted);
+  text-align: center;
+}
+.emptyInsights span { font-size: 2rem; }
+.emptyInsights p { font-size: 0.83rem; line-height: 1.6; }
+
+/* ── Summary row ──────────────────────────────────── */
+.summaryRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .summaryRow { grid-template-columns: 1fr; }
+}
+
+.summaryCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  transition: border-color var(--t);
+}
+.summaryCard:hover { border-color: var(--border-2); }
+
+.summaryIcon { font-size: 1.5rem; flex-shrink: 0; }
+.summaryVal  { font-size: 1.3rem; font-weight: 700; line-height: 1; }
+.summaryLabel { font-size: 0.73rem; color: var(--muted); margin-top: 3px; }
+.summaryLink {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--primary);
+  white-space: nowrap;
+  font-weight: 500;
+}
+.summaryLink:hover { color: var(--primary-light); }
