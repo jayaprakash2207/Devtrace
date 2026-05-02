@@ -16,6 +16,10 @@ const errorHandler    = require('./middleware/errorHandler');
 
 const app = express();
 
+// Trust the first proxy (required on Render / any load-balanced host)
+// so express-rate-limit uses the real client IP, not the proxy IP.
+app.set('trust proxy', 1);
+
 // ─── Security headers ────────────────────────────────────────────────────────
 app.use(helmet());
 
