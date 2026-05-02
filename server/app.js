@@ -3,11 +3,13 @@ const cors       = require('cors');
 const helmet     = require('helmet');
 const morgan     = require('morgan');
 const rateLimit  = require('express-rate-limit');
+const passport   = require('passport');
 
 const authRoutes      = require('./routes/auth');
 const activityRoutes  = require('./routes/activity');
 const dashboardRoutes = require('./routes/dashboard');
 const notesRoutes     = require('./routes/notes');
+const analyticsRoutes = require('./routes/analytics');
 const errorHandler    = require('./middleware/errorHandler');
 
 const app = express();
@@ -35,6 +37,9 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id'],
   })
 );
+
+// ─── Passport (stateless — no sessions) ─────────────────────────────────────
+app.use(passport.initialize());
 
 // ─── Body parsing ────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '50kb' }));    // refuse oversized payloads
@@ -69,6 +74,7 @@ app.use('/api/auth',      authLimiter, authRoutes);
 app.use('/api/activity',  apiLimiter,  activityRoutes);
 app.use('/api/dashboard', apiLimiter,  dashboardRoutes);
 app.use('/api/notes',     apiLimiter,  notesRoutes);
+app.use('/api/analytics', apiLimiter,  analyticsRoutes);
 
 // Health check — useful for load-balancer probes
 app.get('/health', (_, res) => res.json({ status: 'ok', timestamp: new Date() }));

@@ -1,34 +1,74 @@
-const User = require('../models/User');
+const User     = require('../models/User');
 const Activity = require('../models/Activity');
 const { signToken } = require('../utils/jwt');
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 function userPayload(user) {
-  return { id: user._id, email: user.email, username: user.username };
+  return {
+    id:       user._id,
+    email:    user.email,
+    username: user.username,
+    avatar:   user.avatar  || null,
+    provider: user.provider || 'local',
+  };
 }
 
 function logActivity(userId, action) {
-  // Fire-and-forget — auth events must never fail silently but also
-  // must never block the response if the log write fails.
   Activity.create({ userId, action }).catch((err) =>
     console.error('Activity log error:', err.message)
   );
 }
 
-// ─── controllers ────────────────────────────────────────────────────────────
+// Updates streakDays and totalSessions on each new login session.
+// Called fire-and-forget — must never throw to the caller.
+async function updateSessionStats(userId) {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return;
+
+    const today     = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const lastDate  = user.lastActiveDate
+      ? new Date(user.lastActiveDate).toISOString().slice(0, 10)
+      : null;
+
+    // Already logged in today — only update lastActiveDate
+    if (lastDate === today) {
+      await User.findByIdAndUpdate(userId, { $set: { lastActiveDate: new Date() } });
+      return;
+    }
+
+    let newStreak = 1;
+    if (lastDate === yesterday) {
+      newStreak = (user.streakDays || 0) + 1;
+    }
+    // Any other case (gap > 1 day or never logged in) → reset to 1
+
+    await User.findByIdAndUpdate(userId, {
+      $inc: { totalSessions: 1 },
+      $set: { streakDays: newStreak, lastActiveDate: new Date() },
+    });
+  } catch (err) {
+    console.error('Session stats error:', err.message);
+  }
+}
+
+// ─── signup ──────────────────────────────────────────────────────────────────
 
 /**
- * POST /auth/signup
- * Body: { email, password, username? }
+ * POST /api/auth/signup
+ * Body: { email, password, username }
+ * Rules: email valid, password ≥ 8 chars, username 2-30 chars
  */
 exports.signup = async (req, res, next) => {
   try {
     const { email, password, username } = req.body;
 
-    const user = await User.create({ email, password, username });
+    const user = await User.create({ email, password, username, provider: 'local' });
 
     logActivity(user._id, 'signup');
+    updateSessionStats(user._id);
 
     const token = signToken({ id: user._id });
 
@@ -43,23 +83,38 @@ exports.signup = async (req, res, next) => {
   }
 };
 
+// ─── login ───────────────────────────────────────────────────────────────────
+
 /**
- * POST /auth/login
+ * POST /api/auth/login
  * Body: { email, password }
  */
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // password is select:false — must explicitly include it
+    // Always fetch password hash for comparison
     const user = await User.findOne({ email }).select('+password');
 
-    if (!user || !(await user.matchPassword(password))) {
-      // Same message for both cases — prevents user enumeration
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    // OAuth-registered account — guide the user to the right button
+    if (user.provider !== 'local') {
+      const p = user.provider.charAt(0).toUpperCase() + user.provider.slice(1);
+      return res.status(401).json({
+        success: false,
+        message: `This account was created with ${p}. Use the "Continue with ${p}" button below.`,
+      });
+    }
+
+    if (!(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
     logActivity(user._id, 'login');
+    updateSessionStats(user._id);
 
     const token = signToken({ id: user._id });
 
@@ -74,10 +129,34 @@ exports.login = async (req, res, next) => {
   }
 };
 
+// ─── me ──────────────────────────────────────────────────────────────────────
+
 /**
- * GET /auth/me   (protected)
- * Returns the authenticated user's profile.
+ * GET /api/auth/me  (protected)
  */
 exports.me = (req, res) => {
   res.json({ success: true, user: req.user });
+};
+
+// ─── oauthCallback ───────────────────────────────────────────────────────────
+
+/**
+ * Called by passport after a successful Google / GitHub OAuth round-trip.
+ * Issues a JWT then redirects the browser to the SPA callback route.
+ */
+exports.oauthCallback = (req, res) => {
+  const user  = req.user;
+  const token = signToken({ id: user._id });
+
+  logActivity(user._id, 'login');
+  updateSessionStats(user._id);
+
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+
+  const params = new URLSearchParams({
+    token,
+    user: JSON.stringify(userPayload(user)),
+  });
+
+  res.redirect(`${clientUrl}/auth/callback?${params}`);
 };

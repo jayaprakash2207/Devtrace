@@ -1,14 +1,14 @@
-const Activity = require('../models/Activity');
-const Note = require('../models/Note');
-const { generateInsights } = require('../services/insightEngine');
+const Activity              = require('../models/Activity');
+const Note                  = require('../models/Note');
+const { runProductivityEngine } = require('../services/productivityEngine');
 
 /**
- * GET /dashboard  (protected)
+ * GET /api/dashboard  (protected)
  *
- * Returns a single, aggregated payload:
- *   - kpi stats
- *   - AI-style insights
- *   - 7-day chart data (pre-fetched here to save a round-trip)
+ * Returns a single aggregated payload:
+ *   - stats (kpi cards + score breakdown + period distribution)
+ *   - insights (engine-generated, priority-ranked)
+ *   - chart  (7-day daily activity series)
  */
 exports.overview = async (req, res, next) => {
   try {
@@ -16,16 +16,15 @@ exports.overview = async (req, res, next) => {
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
 
-    // Run all queries in parallel
-    const [insightData, recentActivities, totalNotes] = await Promise.all([
-      generateInsights(userId, req.user),
+    const [engineResult, recentActivities, totalNotes] = await Promise.all([
+      runProductivityEngine(userId, req.user),
       Activity.find({ userId, timestamp: { $gte: sevenDaysAgo } })
         .sort({ timestamp: 1 })
         .lean(),
       Note.countDocuments({ userId }),
     ]);
 
-    // Build 7-day chart inline
+    // Build 7-day chart (pre-filled so gaps show as zero)
     const buckets = {};
     for (let i = 6; i >= 0; i--) {
       const key = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
@@ -38,17 +37,16 @@ exports.overview = async (req, res, next) => {
 
     const chartData = Object.entries(buckets).map(([date, count]) => ({ date, count }));
 
-    // Log the dashboard view (non-blocking)
     Activity.create({ userId, action: 'view_dashboard' }).catch(() => {});
 
     res.json({
       success: true,
       stats: {
-        ...insightData.stats,
+        ...engineResult.stats,
         totalNotes,
       },
-      insights: insightData.insights,
-      chart: chartData,
+      insights: engineResult.insights,
+      chart:    chartData,
     });
   } catch (err) {
     next(err);

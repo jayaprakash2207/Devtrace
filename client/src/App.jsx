@@ -1,11 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import Landing   from './pages/Landing';
-import Login     from './pages/Login';
-import Signup    from './pages/Signup';
-import Dashboard from './pages/Dashboard';
-import Notes     from './pages/Notes';
-import Sidebar   from './components/Sidebar';
+import Landing       from './pages/Landing';
+import Login         from './pages/Login';
+import Signup        from './pages/Signup';
+import OAuthCallback from './pages/OAuthCallback';
+import Dashboard     from './pages/Dashboard';
+import Notes         from './pages/Notes';
+import Sidebar       from './components/Sidebar';
 
 /* ── Route guards ─────────────────────────────────��──────────────────── */
 
@@ -41,8 +42,9 @@ export default function App() {
   return (
     <Routes>
       <Route path="/"        element={<Landing />} />
-      <Route path="/login"   element={<PublicRoute><Login  /></PublicRoute>} />
-      <Route path="/signup"  element={<PublicRoute><Signup /></PublicRoute>} />
+      <Route path="/login"        element={<PublicRoute><Login  /></PublicRoute>} />
+      <Route path="/signup"       element={<PublicRoute><Signup /></PublicRoute>} />
+      <Route path="/auth/callback" element={<OAuthCallback />} />
 
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/notes"     element={<ProtectedRoute><Notes     /></ProtectedRoute>} />

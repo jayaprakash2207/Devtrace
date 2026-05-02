@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getDashboard } from '../api/dashboard';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
-import StatCard     from '../components/StatCard';
-import InsightCard  from '../components/InsightCard';
-import ActivityChart from '../components/ActivityChart';
+import { useAuth }      from '../context/AuthContext';
+import { useToast }     from '../context/ToastContext';
+import StatCard         from '../components/StatCard';
+import InsightCard      from '../components/InsightCard';
+import ActivityChart    from '../components/ActivityChart';
 import styles from './Dashboard.module.css';
 
 /* ── helpers ─────────────────────────────────────────────────────────── */
@@ -18,19 +18,106 @@ function greet() {
   return 'Burning midnight oil';
 }
 
-const ACTION_LABELS = {
-  login: 'Signed in',
-  signup: 'Joined DevTrace',
-  view_dashboard: 'Viewed dashboard',
-  create_note: 'Created a note',
-  update_note: 'Updated a note',
-  delete_note: 'Deleted a note',
-  create_task: 'Created a task',
-  update_task: 'Updated a task',
-  delete_task: 'Deleted a task',
-  complete_task: 'Completed a task',
-  custom: 'Custom event',
+/* ── ScoreBar ─────────────────────────────────────────────────────────── */
+
+const FACTOR_COLORS = {
+  'Task Completion':     '#10b981',
+  'Consistency':         '#6366f1',
+  'Daily Streak':        '#f59e0b',
+  'Session Depth':       '#22d3ee',
+  'High-Priority Focus': '#ef4444',
 };
+
+function ScoreBar({ label, score, max }) {
+  const pct     = max > 0 ? Math.round((score / max) * 100) : 0;
+  const color   = FACTOR_COLORS[label] ?? 'var(--primary)';
+  const barRef  = useRef(null);
+
+  useEffect(() => {
+    if (!barRef.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          barRef.current.style.width = `${pct}%`;
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    obs.observe(barRef.current.parentElement);
+    return () => obs.disconnect();
+  }, [pct]);
+
+  return (
+    <div className={styles.scoreBarRow}>
+      <div className={styles.scoreBarMeta}>
+        <span className={styles.scoreBarLabel}>{label}</span>
+        <span className={styles.scoreBarVal} style={{ color }}>{score}/{max}</span>
+      </div>
+      <div className={styles.scoreBarTrack}>
+        <div
+          ref={barRef}
+          className={styles.scoreBarFill}
+          style={{ width: 0, background: color }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ── PeriodChart ─────────────────────────────────────────────────────── */
+
+const PERIOD_META = {
+  morning:   { label: 'Morning',   icon: '🌅' },
+  afternoon: { label: 'Afternoon', icon: '☀️' },
+  evening:   { label: 'Evening',   icon: '🌆' },
+  night:     { label: 'Night',     icon: '🌙' },
+};
+
+function PeriodChart({ distribution }) {
+  if (!distribution) {
+    return <div className={styles.periodEmpty}>Not enough data yet.</div>;
+  }
+  const entries = Object.entries(distribution);
+  return (
+    <div className={styles.periodGrid}>
+      {entries.map(([key, pct]) => {
+        const meta = PERIOD_META[key] ?? { label: key, icon: '⏰' };
+        return (
+          <div key={key} className={styles.periodCell}>
+            <span className={styles.periodIcon}>{meta.icon}</span>
+            <div className={styles.periodBarTrack}>
+              <div
+                className={styles.periodBarFill}
+                style={{ height: `${pct}%`, minHeight: pct > 0 ? 3 : 0 }}
+              />
+            </div>
+            <span className={styles.periodPct}>{pct}%</span>
+            <span className={styles.periodLabel}>{meta.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── MomentumBadge ───────────────────────────────────────────────────── */
+
+const MOMENTUM_CONFIG = {
+  rising:  { icon: '📈', color: 'var(--success)',  label: 'Rising' },
+  falling: { icon: '📉', color: 'var(--danger)',   label: 'Falling' },
+  stable:  { icon: '➡️', color: 'var(--muted)',    label: 'Stable' },
+};
+
+function MomentumBadge({ weeklyTrend }) {
+  if (!weeklyTrend) return null;
+  const cfg = MOMENTUM_CONFIG[weeklyTrend.direction] ?? MOMENTUM_CONFIG.stable;
+  return (
+    <span className={styles.momentumBadge} style={{ color: cfg.color, borderColor: cfg.color }}>
+      {cfg.icon} {cfg.label} {weeklyTrend.pct > 0 ? `${weeklyTrend.pct}%` : ''}
+    </span>
+  );
+}
 
 /* ── component ───────────────────────────────────────────────────────── */
 
@@ -59,11 +146,8 @@ export default function Dashboard() {
   const insights = data?.insights ?? [];
   const chart    = data?.chart    ?? [];
 
-  const trendText = stats.weeklyTrend
-    ? stats.weeklyTrend.direction === 'new'  ? 'First week!'
-    : stats.weeklyTrend.direction === 'up'   ? `↑ ${stats.weeklyTrend.pct}% this week`
-    : `↓ ${stats.weeklyTrend.pct}% this week`
-    : null;
+  const breakdown  = stats.scoreBreakdown   ? Object.values(stats.scoreBreakdown)   : [];
+  const periodDist = stats.periodDistribution ?? null;
 
   return (
     <div className="page-wrap">
@@ -114,8 +198,10 @@ export default function Dashboard() {
         <StatCard
           icon="⚡"
           label="Productivity"
-          value={stats.productivity != null ? `${stats.productivity}` : null}
-          sub={trendText ?? ''}
+          value={stats.productivity != null
+            ? `${stats.productivity}/100 ${stats.grade ? stats.grade.grade : ''}`
+            : null}
+          sub={stats.grade ? stats.grade.label : ''}
           color="success"
           loading={loading}
         />
@@ -128,7 +214,7 @@ export default function Dashboard() {
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>7-Day Activity</h2>
-            <span className={styles.panelBadge}>Daily actions</span>
+            <MomentumBadge weeklyTrend={stats.weeklyTrend} />
           </div>
           <ActivityChart data={chart} loading={loading} />
         </section>
@@ -136,7 +222,7 @@ export default function Dashboard() {
         {/* Insights */}
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
-            <h2 className={styles.panelTitle}>AI Insights</h2>
+            <h2 className={styles.panelTitle}>Intelligence Insights</h2>
             <span className={styles.panelBadge}>{insights.length} active</span>
           </div>
           {loading ? (
@@ -154,6 +240,57 @@ export default function Dashboard() {
             <div className={styles.insightsList}>
               {insights.map((ins, i) => <InsightCard key={i} {...ins} />)}
             </div>
+          )}
+        </section>
+      </div>
+
+      {/* ── Intelligence engine panels ────────────────────── */}
+      <div className={styles.analyticsGrid}>
+
+        {/* Score breakdown */}
+        <section className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h2 className={styles.panelTitle}>Score Breakdown</h2>
+            {stats.grade && !loading && (
+              <span
+                className={styles.gradeBadge}
+                style={{ color: stats.grade.color, borderColor: stats.grade.color }}
+              >
+                {stats.grade.grade} · {stats.grade.label}
+              </span>
+            )}
+          </div>
+          {loading ? (
+            <div className={styles.insightsSkeleton}>
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="skeleton" style={{ height: 36, borderRadius: 6 }} />
+              ))}
+            </div>
+          ) : breakdown.length === 0 ? (
+            <p className={styles.noData}>Log more activity to see your breakdown.</p>
+          ) : (
+            <div className={styles.breakdownList}>
+              {breakdown.map(f => <ScoreBar key={f.label} {...f} />)}
+            </div>
+          )}
+        </section>
+
+        {/* Period distribution */}
+        <section className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h2 className={styles.panelTitle}>When You Work</h2>
+            {stats.peakDayName && !loading && (
+              <span className={styles.panelBadge}>Best day: {stats.peakDayName}</span>
+            )}
+          </div>
+          {loading ? (
+            <div className={styles.periodSkeleton}>
+              {[1,2,3,4].map(i => (
+                <div key={i} className="skeleton" style={{ height: 80, borderRadius: 6, flex: 1 }} />
+              ))}
+            </div>
+          ) : (
+            <PeriodChart distribution={periodDist} />
           )}
         </section>
       </div>
@@ -178,7 +315,9 @@ export default function Dashboard() {
         <div className={styles.summaryCard}>
           <span className={styles.summaryIcon}>🏆</span>
           <div>
-            <p className={styles.summaryVal}>{loading ? '…' : (stats.productivity != null ? `${stats.productivity}/100` : '—')}</p>
+            <p className={styles.summaryVal} style={{ color: stats.grade?.color }}>
+              {loading ? '…' : (stats.productivity != null ? `${stats.productivity}/100` : '—')}
+            </p>
             <p className={styles.summaryLabel}>Productivity score</p>
           </div>
         </div>
