@@ -6,6 +6,7 @@ import { useToast }     from '../context/ToastContext';
 import StatCard         from '../components/StatCard';
 import InsightCard      from '../components/InsightCard';
 import ActivityChart    from '../components/ActivityChart';
+import ChatPanel        from '../components/ChatPanel';
 import styles from './Dashboard.module.css';
 
 /* ── helpers ─────────────────────────────────────────────────────────── */
@@ -125,8 +126,9 @@ export default function Dashboard() {
   const { user } = useAuth();
   const toast    = useToast();
 
-  const [data,    setData]    = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data,       setData]       = useState(null);
+  const [loading,    setLoading]    = useState(true);
+  const [chatOpen,   setChatOpen]   = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -322,6 +324,19 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── Gemini AI Chat FAB ────────────────────────── */}
+      <button
+        className={styles.chatFab}
+        onClick={() => setChatOpen(true)}
+        aria-label="Open AI Chat"
+        title="Ask DevTrace AI"
+      >
+        <span className={styles.chatFabIcon}>🤖</span>
+        <span className={styles.chatFabLabel}>Ask AI</span>
+      </button>
+
+      {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
 
     </div>
   );

@@ -445,6 +445,54 @@ function scoreLabel(score) {
   return              { grade: 'D',  label: 'Getting Started', color: '#ef4444' };
 }
 
+/* ── AI insight generator (Gemini) ──────────────────────────────── */
+
+async function generateAIInsights(analysis) {
+  const { peakTime, momentum, tasks, streak, score, burnout, totalActivities } = analysis;
+
+  const completedTasks = tasks.filter(t => t.status === 'done').length;
+  const pendingHigh    = tasks.filter(t => t.priority === 'high' && t.status !== 'done').length;
+  const pd             = peakTime.periodDistribution || {};
+
+  const prompt = `You are an AI productivity coach inside DevTrace, a developer productivity tracker.
+Generate exactly 5 personalised, data-driven insights for this developer.
+
+REAL USER DATA:
+- Productivity Score: ${score}/100
+- Daily Login Streak: ${streak} days
+- Peak Work Period: ${peakTime.peakPeriodLabel} (around ${peakTime.peakHour}:00)
+- Most Productive Day: ${peakTime.peakDayName}
+- 14-Day Trend: ${momentum.direction} (${momentum.weekDelta > 0 ? '+' : ''}${momentum.weekDelta}% vs last week)
+- Total Activities Logged: ${totalActivities}
+- Tasks Completed: ${completedTasks} of ${tasks.length}
+- High-Priority Tasks Pending: ${pendingHigh}
+- Burnout Signal: ${burnout.isBurning ? 'YES — activity spike detected' : 'None'}
+- Long Sessions (4 h+): ${burnout.longSessions}
+- Period Split: Morning ${pd.morning || 0}%, Afternoon ${pd.afternoon || 0}%, Evening ${pd.evening || 0}%, Night ${pd.night || 0}%
+
+Return ONLY a valid JSON array — no markdown, no explanation.
+Each of the 5 objects must have exactly these keys:
+  "type"    — one of: peak_time | trend_up | trend_down | stable | streak | high_priority | task_champion | score_high | score_mid | score_low | deep_focus | shallow_sessions | burnout | best_day | new_user
+  "icon"    — one relevant emoji
+  "title"   — ≤ 8 words
+  "message" — 2-3 sentences, reference the actual numbers, be actionable`;
+
+  try {
+    const { generate, extractJsonArray } = require('./geminiService');
+    const raw      = await generate(prompt, { temperature: 0.75, maxTokens: 1200 });
+    const insights = extractJsonArray(raw);
+
+    if (!insights || insights.length === 0) throw new Error('Empty insights from Gemini');
+
+    return insights
+      .slice(0, 5)
+      .map(({ priority, ...rest }) => rest);
+  } catch (err) {
+    console.warn('[ProductivityEngine] Gemini insights failed — using rule-based fallback:', err.message);
+    return generateInsights(analysis);
+  }
+}
+
 /* ── Main export ─────────────────────────────────────────────────── */
 
 async function runProductivityEngine(userId, user) {
@@ -506,8 +554,8 @@ async function runProductivityEngine(userId, user) {
     tasks,
   };
 
-  // ── Insights ────────────────────────────────────────────────────
-  const insights = generateInsights(analysis);
+  // ── Insights (Gemini AI with rule-based fallback) ────────────────
+  const insights = await generateAIInsights(analysis);
 
   // ── Stats for dashboard cards ───────────────────────────────────
   const stats = {
